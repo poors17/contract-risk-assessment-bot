@@ -2,6 +2,7 @@ import streamlit as st
 import spacy
 import pdfplumber
 import re
+from spacy.lang.en import English
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(
@@ -10,7 +11,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# ---------------- GLOBAL CSS (BACKGROUND + CARDS) ----------------
+# ---------------- GLOBAL CSS ----------------
 st.markdown("""
 <style>
 body {
@@ -52,16 +53,17 @@ body {
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------- LOAD NLP MODEL ----------------
-# ---------------- LOAD NLP MODEL (SAFE FOR STREAMLIT) ----------------
-from spacy.lang.en import English
-
+# ---------------- LOAD NLP MODEL (SAFE) ----------------
 try:
     nlp = spacy.load("en_core_web_sm")
 except:
     nlp = English()
     nlp.add_pipe("sentencizer")
 
+# ---------------- INITIALIZE VARIABLES ----------------
+parties = []
+dates = []
+money = []
 
 # ---------------- TITLE ----------------
 st.markdown("""
@@ -103,16 +105,15 @@ if text:
     parties = list(set(ent.text for ent in doc.ents if ent.label_ == "ORG"))
     dates = list(set(ent.text for ent in doc.ents if ent.label_ == "DATE"))
     money = re.findall(r'₹\s?\d+(?:,\d+)*(?:\.\d+)?', text)
-  
-  # ---- FALLBACK RULE-BASED EXTRACTION (VERY IMPORTANT) ----
 
-if not parties:
-    org_pattern = r'\b[A-Z][A-Za-z& ]+(?:Technologies|Solutions|Corporation|Ltd|Private Limited)\b'
-    parties = list(set(re.findall(org_pattern, text)))
+    # -------- FALLBACK EXTRACTION (IMPORTANT) --------
+    if not parties:
+        org_pattern = r'\b[A-Z][A-Za-z& ]+(?:Technologies|Solutions|Corporation|Ltd|Private Limited)\b'
+        parties = list(set(re.findall(org_pattern, text)))
 
-if not dates:
-    date_pattern = r'\b\d+\s+(?:months?|years?)\b'
-    dates = list(set(re.findall(date_pattern, text)))
+    if not dates:
+        date_pattern = r'\b\d+\s+(?:months?|years?)\b'
+        dates = list(set(re.findall(date_pattern, text)))
 
     # -------- DETAILS --------
     st.markdown("""
@@ -122,13 +123,13 @@ if not dates:
     """, unsafe_allow_html=True)
 
     st.markdown("**🏢 Parties:**")
-    st.write(parties)
+    st.write(parties if parties else "Not detected")
 
     st.markdown("**📅 Dates:**")
-    st.write(dates)
+    st.write(dates if dates else "Not detected")
 
     st.markdown("**💰 Amounts:**")
-    st.write(money)
+    st.write(money if money else "Not detected")
 
     # -------- RISK ANALYSIS --------
     risky_words = ["penalty", "terminate", "liability", "indemnity"]
@@ -153,8 +154,8 @@ if not dates:
     <div class="card">
         <h3>📝 Summary</h3>
         <p>
-        This contract includes key parties, dates, and monetary values.
-        Potential risks are identified based on legal clauses such as
+        This contract includes identified parties, time duration, and monetary values.
+        Potential legal risks are highlighted based on sensitive clauses such as
         termination, penalties, and liabilities.
         </p>
     </div>
