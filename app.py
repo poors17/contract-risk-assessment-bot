@@ -95,7 +95,7 @@ if text:
     </div>
     """, unsafe_allow_html=True)
 
-    st.text_area("", text, height=220)
+    st.text_area("Contract Text", text, height=220)
 
     # -------- NLP PROCESS --------
     doc = nlp(text)
@@ -103,6 +103,16 @@ if text:
     parties = list(set(ent.text for ent in doc.ents if ent.label_ == "ORG"))
     dates = list(set(ent.text for ent in doc.ents if ent.label_ == "DATE"))
     money = re.findall(r'₹\s?\d+(?:,\d+)*(?:\.\d+)?', text)
+  
+  # ---- FALLBACK RULE-BASED EXTRACTION (VERY IMPORTANT) ----
+
+if not parties:
+    org_pattern = r'\b[A-Z][A-Za-z& ]+(?:Technologies|Solutions|Corporation|Ltd|Private Limited)\b'
+    parties = list(set(re.findall(org_pattern, text)))
+
+if not dates:
+    date_pattern = r'\b\d+\s+(?:months?|years?)\b'
+    dates = list(set(re.findall(date_pattern, text)))
 
     # -------- DETAILS --------
     st.markdown("""
