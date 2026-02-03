@@ -53,7 +53,15 @@ body {
 """, unsafe_allow_html=True)
 
 # ---------------- LOAD NLP MODEL ----------------
-nlp = spacy.load("en_core_web_sm")
+# ---------------- LOAD NLP MODEL (SAFE FOR STREAMLIT) ----------------
+from spacy.lang.en import English
+
+try:
+    nlp = spacy.load("en_core_web_sm")
+except:
+    nlp = English()
+    nlp.add_pipe("sentencizer")
+
 
 # ---------------- TITLE ----------------
 st.markdown("""
