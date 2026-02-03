@@ -2,4 +2,3 @@ streamlit
 spacy
 pdfplumber
 regex
-en-core-web-sm
